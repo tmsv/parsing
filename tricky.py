@@ -3,10 +3,12 @@ from bs4 import BeautifulSoup
 import csv
 from random import choice, uniform
 from time import sleep
+from datetime import datetime
 
+# Самая удачная конфигурация серверов: https://take.ms/oklub (особенно см. анонимити и https)
 
 def get_html(url, useragent=None, proxy=None):
-	print('get_html')
+	#print('get_html')
 	r = requests.get(url, headers=useragent, proxies=proxy)
 	return r.text
 
@@ -25,12 +27,9 @@ def get_all_links(html):
 
 def get_page_data(html):
 	soup = BeautifulSoup(html, 'lxml')
-	try:
-		name = soup.find('h1', class_='details-panel-item--name').find('span').previous.strip() # .text используется, чтобы забрать текст из объекта супа, а .strip() используется, чтобы его очистить от непечатаемых символов
-	# else:
-	# 	name = soup.find('span', class_='text-large').text.strip()
-	except:
-		name = ''
+	
+	name = soup.find('h1', class_='details-panel-item--name').find('span').previous.strip() # .text используется, чтобы забрать текст из объекта супа,
+																								# а .strip() используется, чтобы его очистить от непечатаемых символов
 
 	try:
 		price = soup.find('span', id='quote_price').find('span', class_='details-panel-item--price__value').text.strip()
@@ -51,33 +50,42 @@ def write_csv(data):
 		print(data['name'], 'parsed')
 
 def main():
+	start = datetime.now()
+
 	url =  'https://coinmarketcap.com/all/views/all/'
 
 	useragents = open('useragents.txt').read().split('\n')
 	proxies = open('proxies.txt').read().split('\n')
 
 	useragent = {'User-Agent': choice(useragents)}
-	proxy = {'https': 'https://' + choice(proxies)}
+	proxy = {'http': 'http://' + choice(proxies)}
 
 	all_links = get_all_links(get_html(url, useragent, proxy))
 
-
-	for i in range(40):
-		t = uniform(1, 3)
+	number = 0
+	for i in range(120):
+		t = uniform(3, 12)
 		sleep(t)
+		number += 1
+		print(number)
 		url = all_links[i]
-		useragent = {'User-Agent': choice(useragents)}
-		proxy = {'https': 'https://' + choice(proxies)}
 		
-		try:
-			html = get_html(url, useragent, proxy)
-			data = get_page_data(html)
-			write_csv(data)
-			print(data)
-		except:
-			print('--FAILED--')
-			continue
+		
+		while True:
+			try:
+				useragent = {'User-Agent': choice(useragents)}
+				proxy = {'http': 'http://' + choice(proxies)}
+				html = get_html(url, useragent, proxy)
+				data = get_page_data(html)
+				write_csv(data)
+				print(data)
+			except AttributeError:
+				continue
+			break
 
+	end = datetime.now()
+	total = end - start
+	print(str(total))
 
 if __name__ == '__main__':
 	main()
