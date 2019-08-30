@@ -1,0 +1,44 @@
+from bs4 import BeautifulSoup
+import csv
+import re
+
+def get_page_data(html):
+	soup = BeautifulSoup(html, 'lxml')
+
+	trs = soup.find('table', id='tableOp')
+
+	return tr
+
+
+
+
+def main():
+
+	with open('april.html', 'rb') as html:
+		soup = BeautifulSoup(html, 'lxml')
+		tables = soup.find('table', id='tableOp').find_all('table')
+
+		for table in tables:
+			category = table.find('td').next_sibling.text.strip()
+			print(category)
+			money = table.find('td').next_sibling.next_sibling.text.strip()
+			print(money)
+			regexp = r'\d{2}.\d{2}.\d{4}'
+			date = table.find(text=re.compile(regexp))
+			print(date)
+
+			info = {'category': category,
+					'money': money,
+					'date': date}
+			print(info)
+
+			with open ('april.csv', 'a') as f:
+				writer = csv.writer(f)
+				writer.writerow((info['category'],
+						info['money'],
+						info['date']))
+
+
+
+if __name__ == "__main__":
+	main()
